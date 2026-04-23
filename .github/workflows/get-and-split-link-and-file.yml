@@ -1,0 +1,44 @@
+name: Download & Zip-Split Batocera Orange Pi Zero3 Image
+
+on:
+  workflow_dispatch:   # manual trigger – you can run it whenever needed
+
+jobs:
+  zip-split:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download the image
+        run: |
+          URL="https://mirrors.o2switch.fr/batocera/orangepi-zero3/stable/rc/batocera-h616-orangepi-zero3-42-20251011.img.gz"
+          echo "Downloading $URL …"
+          wget -q "$URL" -O batocera.img.gz
+
+      - name: Remove old split parts
+        run: |
+          rm -f batocera-orangepi-zero3.z* batocera-orangepi-zero3.zip
+
+      - name: Create multi-volume ZIP archive (max compression, 95M parts)
+        run: |
+          # -9   = maximum compression
+          # -s 95m = split into volumes of 95 MiB each
+          # -r   = store file recursively (just one file here)
+          zip -9 -s 95m -r batocera-orangepi-zero3.zip batocera.img.gz
+
+          # Delete the original big file to avoid committing it
+          rm batocera.img.gz
+
+      - name: Commit & push the ZIP parts
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+
+          git add batocera-orangepi-zero3.z* batocera-orangepi-zero3.zip
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update Batocera Orange Pi Zero3 image (ZIP parts, level 9)"
+            git push
+          fi
