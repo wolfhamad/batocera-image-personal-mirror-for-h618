@@ -28,7 +28,7 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add batocera-orangepi-zero3.z* batocera-orangepi-zero3.zip
+          git add batocera-orangepi-zero3.z*
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
